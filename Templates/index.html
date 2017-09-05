@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Car Sales Catalog</title>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" type="text/css">
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
+<meta charset="utf-8">
+
+</head>
+
+<body>
+		<div class="navbar">
+  <a href="#home" class = "column-left">Car Sales Catalog</a>
+  {% if username %}
+  <span class= "column-right">
+
+  <a href="{{ url_for('disconnect') }}"><img class = "img_logo" src="{{ usr_img }}" alt="{{ username }}">  Logout</a>
+   </span>
+  {% else %}
+  	<div class= "column-right">
+  	<a href="{{ url_for('showLogin') }}"><i class=" fa fa-sign-in" aria-hidden="true"></i> Login</a>
+  	</div>
+  	{% endif %}
+</div>
+
+<div class="main">
+</div>
+
+		<section id="body" class="width">
+			<aside id="sidebar" class="column-left">
+
+			<header>
+				<h1><a href="#">Categories</a></h1>
+
+			</header>
+
+			<nav id="mainnav">
+  				<ul>
+                    <li><a href="{{ url_for('categoryItems') }}">Home</a></li>
+                     {% for i in allcategory %}
+    				<li><a href="{{url_for('selectCategory', name=i.name)}}"> {{i.name}} </a></li>
+    				{% endfor %}
+
+                 </ul>
+			</nav>
+
+
+
+			</aside>
+			<section id="content" class="column-right">
+<!--MESSAGE FLASHING EXAMPLE -->
+						{% with messages = get_flashed_messages() %}
+						{% if messages %}
+						<ul>
+						{% for message in messages %}
+  						<li><strong>{{message}}</strong></li>
+  						{% endfor %}
+						</ul>
+						{% endif %}
+						{% endwith %}
+
+			{% if category.name %}
+			<a href="{{ url_for('newItem', name=category.name) }}" class="button button-submit column-right ">Add New Item</a>
+			{% endif %}
+			{% for i in items %}
+						<article>
+
+						<h2>{{i.name}}</h2>
+						<div class="article-info">Created by <a href="#" rel="author">{{i.created_by}}</a></div>
+						<p>{{i.description}}</p>
+
+						<h3><strong>Cost:</strong> {{i.price}} </h3>
+						{% if i.created_by == user_email %}
+						{% if category.name %}
+						<a href="{{ url_for('editItem', name=category.name, item_id=i.item_id) }}" class="button button-reversed">Edit Item</a>
+						<a href="{{ url_for('deleteItem', name=category.name, item_id=i.item_id) }}" class="button">Delete Item</a>
+						{% endif %}
+						{% endif %}
+		</article>
+		{% endfor %}
+		<!--<article class="expanded">
+
+            		<h2>Buy unbranded</h2>
+			<div class="article-info">Posted on <time datetime="2013-05-14">14 May</time> by <a href="#" rel="author">Joe Bloggs</a></div>
+
+
+            <p>Purchasing a template license for 8.00 GBP (at time of writing around 12 USD) gives you the right to remove any branding including links, logos and source tags relating to ZyPOP. As well as waiving the attribution requirement, your payment will also help us provide continued support for users as well as creating new web templates. Find out more about how to buy at the licensing page on our website which can be accessed at <a href="http://zypopwebtemplates.com/licensing" title="template license">http://zypopwebtemplates.com/licensing</a></p>
+
+<h3>Lorem lipsum</h3>
+
+<p>Morbi fermentum condimentum felis, commodo vestibulum sem mattis sed. Aliquam magna ante, mollis vitae tincidunt in, malesuada vitae turpis. Sed aliquam libero ut velit bibendum consectetur. Quisque sagittis, est in laoreet semper, enim dui consequat felis, faucibus ornare urna velit nec leo. Maecenas condimentum velit vitae est lobortis fermentum. In tristique sem vitae metus ornare luctus tempus nisl volutpat. Integer et est id nisi tempus pharetra sagittis et libero.</p>
+
+
+		<a href="#" class="button">Edit Item</a>
+		<a href="#" class="button button-reversed">Delete Item</a>
+		</article>
+		-->
+
+			<footer class="clear">
+				<p>&copy; 2017 Item Catalog. <a href="https://vishyarjun.github.io/">Visit Developer</a></p>
+			</footer>
+
+		</section>
+
+		<div class="clear"></div>
+
+	</section>
+
+
+</body>
+</html>
