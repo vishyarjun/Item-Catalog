@@ -1,20 +1,16 @@
 <html>
-<head>
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='add_edit.css') }}">
-</head>
-<body>
-<h1> Are you sure you want to delete {{item.name}}? </h1>
-
-<form action="{{ url_for('deleteItem', name=cname,item_id=item.item_id)}}" method = 'post'>
-
-<input type='submit', value = 'Delete'>
-
-
-
-
-</form>
-
-<a href= '{{url_for('categoryItems', name= cname)}}'> Cancel</a>
-</body>
-
+	<head>
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
+		<meta charset="utf-8">
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='add_edit.css') }}">
+	</head>
+	<body>
+		<div class="form-style-5">
+		<h1><center>Are you sure you want to delete {{item.name}}? </center> </h1>
+		<form action="{{ url_for('deleteItem', name=cname,item_id=item.item_id)}}" method = 'post'>
+			<input type='submit', value = 'Delete'>
+		</form>
+		</div>
+		<a href= "{{url_for('categoryItems', name= cname)}}"> Cancel </a>
+	</body>
 </html>
