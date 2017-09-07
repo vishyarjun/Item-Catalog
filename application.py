@@ -3,6 +3,7 @@ from flask import redirect, url_for, flash, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import desc
+from functools import wraps
 from database_setup import Base, Sales_Category, User_Details, Sales_Item
 from flask import session as login_session
 import random
@@ -35,6 +36,16 @@ def showLogin():
     return render_template('login.html', STATE=state)
 
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' in login_session:
+            return f(*args, **kwargs)
+        else:
+            return redirect('/login')
+    return decorated_function
+
+
 # Method for connecting third party OAuth - FB
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
@@ -48,7 +59,7 @@ def fbconnect():
         'web']['app_id']
     app_secret = json.loads(
         open('fb_client_secrets.json', 'r').read())['web']['app_secret']
-    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
+    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (  # noqa
         app_id, app_secret, access_token)
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
@@ -63,7 +74,7 @@ def fbconnect():
         the graph api calls
     '''
     token = result.split(',')[0].split(':')[1].replace('"', '')
-    url = 'https://graph.facebook.com/v2.8/me?access_token=%s&fields=name,id,email' % token
+    url = 'https://graph.facebook.com/v2.8/me?access_token=%s&fields=name,id,email' % token  # noqa
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     # print "url sent for API access:%s"% url
@@ -76,7 +87,7 @@ def fbconnect():
     # The token must be stored in the login_session in order to properly logout
     login_session['access_token'] = token
     # Get user picture
-    url = 'https://graph.facebook.com/v2.8/me/picture?access_token=%s&redirect=0&height=200&width=200' % token
+    url = 'https://graph.facebook.com/v2.8/me/picture?access_token=%s&redirect=0&height=200&width=200' % token  # noqa
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     data = json.loads(result)
@@ -92,7 +103,7 @@ def fbconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' "style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' "style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '  # noqa
     flash("Now logged in as %s" % login_session['username'])
     return output
 
@@ -103,7 +114,7 @@ def fbdisconnect():
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
-    url = 'https://graph.facebook.com/%s/permissions?access_token=%s'% (facebook_id, access_token)
+    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id, access_token)  # noqa
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
     return "you have been logged out"
@@ -132,7 +143,7 @@ def gconnect():
 
     # Check that the access token is valid.
     access_token = credentials.access_token
-    url = ('https://www.googleapis.com/oauth2/v2/tokeninfo?access_token=%s' % access_token)
+    url = ('https://www.googleapis.com/oauth2/v2/tokeninfo?access_token=%s' % access_token)  # noqa
     h = httplib2.Http()
     result = json.loads(h.request(url, 'GET')[1])
     # If there was an error in the access token info, abort.
@@ -191,7 +202,7 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '  # noqa
     flash("you are now logged in as %s" % login_session['username'])
     print "done!"
     return output
@@ -211,7 +222,7 @@ def gdisconnect():
     print 'In gdisconnect access token is %s', access_token
     print 'User name is: '
     print login_session['username']
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s'% login_session['access_token']
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']  # noqa
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print 'result is '
@@ -226,8 +237,8 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     else:
-        response = make_response(json.dumps('Failed to revoke token for given'
-                                            + ' user.', 400))
+        response = make_response(json.dumps('Failed to revoke token for user' +
+                                            ' given.', 400))
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -268,19 +279,17 @@ def selectCategory(name):
 
 
 # this method returns a JSON based on structure defined in database_setup.py
-@app.route('/sales/<string:name>/JSON')
-def selectCategoryJSON(name):
-    ctg = session.query(Sales_Category).filter_by(name=name).one()
-    items = session.query(Sales_Item).filter_by(category_id=ctg.category_id).all()
-    return jsonify(Sales_Item=[i.serialize for i in items])
+@app.route('/<int:item_id>/JSON')
+def selectCategoryJSON(item_id):
+    item = [session.query(Sales_Item).filter_by(item_id=item_id).one()]
+    return jsonify(Sales_Item=[i.serialize for i in item])
 
 
 # method to add a new car for a category
 @app.route('/sales/<string:name>/new/', methods=['GET', 'POST'])
+@login_required
 def newItem(name):
     category = session.query(Sales_Category).filter_by(name=name).one()
-    if 'username' not in login_session:
-        return redirect('/login')
     if request.method == 'POST':
         salesItem = Sales_Item(name=request.form['name'],
                                description=request.form['description'],
@@ -291,18 +300,17 @@ def newItem(name):
                                user_email=login_session['email'])
         session.add(salesItem)
         session.commit()
-        flash("A new " + name + " item added for sale -" + salesItem.name
-              + "!")
+        flash("A new " + name + " item added for sale -" + salesItem.name +
+              "!")
         return redirect(url_for('categoryItems'))
     return render_template('add_new_item.html', category=category)
 
 
 # Method to edit car name, description and price
 @app.route('/sales/<string:name>/<int:item_id>/edit/', methods=['GET', 'POST'])
+@login_required
 def editItem(name, item_id):
     edited_item = session.query(Sales_Item).filter_by(item_id=item_id).one()
-    if 'username' not in login_session:
-        return redirect('/login')
     if request.method == 'POST':
         edited_item.name = request.form['name']
         edited_item.description = request.form['description']
@@ -317,10 +325,9 @@ def editItem(name, item_id):
 # Method to delete a Car from the item list
 @app.route('/sales/<string:name>/<int:item_id>/delete/',
            methods=['GET', 'POST'])
+@login_required
 def deleteItem(name, item_id):
     delete_item = session.query(Sales_Item).filter_by(item_id=item_id).one()
-    if 'username' not in login_session:
-        return redirect('/login')
     if request.method == 'POST':
         session.delete(delete_item)
         session.commit()
@@ -349,8 +356,8 @@ def getUserInfo(user_email):
 # This method is used to retreive user from DB and return users ID
 def getUserID(user_email):
     try:
-        user = session.query(User_Details).filter_by(user_email=user_email).one()
-        return user.user_email
+        ur = session.query(User_Details).filter_by(user_email=user_email).one()
+        return ur.user_email
     except:
         return None
 
