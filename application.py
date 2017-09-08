@@ -311,6 +311,8 @@ def newItem(name):
 @login_required
 def editItem(name, item_id):
     edited_item = session.query(Sales_Item).filter_by(item_id=item_id).one()
+    if edited_item.created_by != login_session['email']:
+        return "<script>function myFunction() {alert('You are not authorized to edit this Item.');}</script><body onload='myFunction()''>"  # noqa
     if request.method == 'POST':
         edited_item.name = request.form['name']
         edited_item.description = request.form['description']
@@ -328,6 +330,8 @@ def editItem(name, item_id):
 @login_required
 def deleteItem(name, item_id):
     delete_item = session.query(Sales_Item).filter_by(item_id=item_id).one()
+    if delete_item.created_by != login_session['email']:
+        return "<script>function myFunction() {alert('You are not authorized to delete this Item.');}</script><body onload='myFunction()''>"  # noqa
     if request.method == 'POST':
         session.delete(delete_item)
         session.commit()
